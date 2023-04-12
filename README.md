@@ -4,6 +4,8 @@
 
 ## Proposta
 
+Front end da aplicação: a href="https://github.com/luskas8/game-front" target="_blank">Game Front</a>
+
 ## Tecnologias
 
 ### Arquitetura da aplicação
