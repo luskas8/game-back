@@ -28,7 +28,7 @@
 ### Testando a aplicação
 
 ## Licença MIT
-Direitos Reservados 2022 Artur Freire
+Direitos Reservados 2022 Lucas Anjos
 
 Permissão é garantida por este meio, livre de ônus, para qualquer pessoa que obtenha uma cópia desde software e arquivos de documentação associados, para lidar com o Software sem restrições, incluindo nenhuma limitação de direitos de uso, cópia, modificação, fusão, publicação, distribuição, sublicenciamento, e/ou venda de cópias do Software, e para permitir que pessoas a quem foi fornecido o Software façam o mesmo, sujeitos às seguintes condições:
 
