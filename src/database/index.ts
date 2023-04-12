@@ -1,9 +1,13 @@
+import Games from "./in-memory/games"
 import Participants from "./in-memory/participants"
 import Rooms from "./in-memory/rooms"
+import Places from "./static-memory/places"
 
 interface Database {
   Participants: Participants
   Rooms: Rooms
+  Places: Places
+  Games: Games
 }
 
 export class InMemoryDatabase {
@@ -17,7 +21,9 @@ export class InMemoryDatabase {
     if (!this._instance) {
       this._instance = {
         Participants: new Participants(),
-        Rooms: new Rooms()
+        Rooms: new Rooms(),
+        Places: new Places(),
+        Games: new Games(),
       }
     }
 

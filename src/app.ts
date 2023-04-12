@@ -2,7 +2,7 @@ import { Express, json, urlencoded } from "express"
 import cors from "cors"
 import { corsConfig } from "./config/cors"
 import { APIError } from "./entities/Error"
-import router from "./routes"
+import router from "./app/routes"
 import SocketServer from "./entities/SocketServer"
 import { connection } from "./app/socket/connection"
 import { InMemoryDatabase } from "./database"
@@ -17,6 +17,11 @@ export function main(app: Express): boolean {
     app.use(json())
     app.use(urlencoded({ extended: true }))
     app.use(router)
+    app.get('*', (req, res) => {
+      res.status(404).json({
+        message: "Invalid endpoint."
+      })
+    });
 
     const io = SocketServer.getSocket()
 

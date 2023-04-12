@@ -3,6 +3,8 @@ import { InMemoryDatabase } from "../../database"
 import { Participant } from "../../entities/Participant"
 import { Room } from "../../entities/Room"
 import SocketServer from "../../entities/SocketServer"
+import { APIError } from "../../entities/Error"
+import { Message } from "../../@types/socket"
 
 interface JoinData {
   room_id: string
@@ -11,7 +13,7 @@ interface JoinData {
 
 export function connection(socket: Socket): void {
   const database = InMemoryDatabase.getIstance()
-
+  const io = SocketServer.getSocket()
 
   console.log("New client connected")
 
@@ -19,6 +21,10 @@ export function connection(socket: Socket): void {
     console.log("Client disconnected")
 
     const room = database.Rooms.findBySocketId(socket.id)
+    if (!room) {
+      new APIError("ROOM_NOT_FOUND", 404, "Room not found", true)
+      return
+    }
     socket.leave(room.name)
     room?.removeParticipantBySocket(socket.id)
     database.Participants.removeBySocket(socket.id)
@@ -36,7 +42,6 @@ export function connection(socket: Socket): void {
     room.removeParticipant(participant)
     database.Participants.remove(participant)
   }))
-
 
   socket.on("join", ((data: JoinData) => {
     const participant = database.Participants.find(data.participant_id)
@@ -77,16 +82,17 @@ export function connection(socket: Socket): void {
     socket.send({ message: "You joined the room." })
   }))
 
-  socket.on("message", (data: { room_id: string, message: string, owner: string }) => {
+  socket.on("message", (data:Message) => {
+    console.log(data)
     const room = database.Rooms.findById(data.room_id)
 
-    if (!room) {
-      console.log("Room not found")
-      return
+    if (data.message === "ping") {
+      socket.emit("message", { message: "pong" })
     }
 
-    const io = SocketServer.getSocket()
-
-    io.to(data.room_id).emit("message_room", { message: data.message, owner: data.owner })
-  })
+    if (data.message === "start") {
+      console.log("start")
+      io.to(room.name).emit("start")
+    }
+  });
 }

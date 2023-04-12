@@ -1,8 +1,8 @@
 import { Router } from "express"
-import { BaseResponse } from "../@types/response"
-import { InMemoryDatabase } from "../database"
-import { Participant } from "../entities/Participant"
-import { Room } from "../entities/Room"
+import { BaseResponse } from "../../@types/response"
+import { InMemoryDatabase } from "../../database"
+import { Participant } from "../../entities/Participant"
+import { Room } from "../../entities/Room"
 
 const router = Router()
 
@@ -53,14 +53,47 @@ router.get('/data', (req, res) => {
   const database = InMemoryDatabase.getIstance()
   res.status(200).send({
     rooms: database.Rooms.rooms,
-    participants: database.Participants.participants
+    participants: database.Participants.participants,
+    games: database.Games.games,
   })
 })
 
-router.get('*', (req, res) => {
-  res.status(404).json({
-    message: "Invalid endpoint."
+router.get('/places', (req, res) => {
+  const database = InMemoryDatabase.getIstance()
+  res.status(200).send({
+    places: database.Places.places
   })
-});
+})
+
+router.get('/game/:game_id/places/:participant_id', (req, res) => {
+  const { game_id, participant_id } = req.params
+
+  if (!game_id || !participant_id) {
+    return res.status(400).json({
+      message: "Invalid request."
+    })
+  }
+  const database = InMemoryDatabase.getIstance()
+
+  const game = database.Games.findById(game_id)
+
+  if (!game) {
+    return res.status(400).json({
+      message: "Invalid game."
+    })
+  }
+
+  const player = game.playerById(participant_id)
+
+  if (!player) {
+    return res.status(400).json({
+      message: "Invalid participant."
+    })
+  }
+
+  res.status(200).json({
+    places: player.characterPlaces
+  })
+})
 
 export default router

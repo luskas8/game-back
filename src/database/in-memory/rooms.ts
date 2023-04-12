@@ -2,9 +2,13 @@ import { Room } from "../../entities/Room";
 
 export default class Rooms {
   _rooms: Room[]
+  _jobIsActiveted: boolean
 
   constructor() {
     this._rooms = []
+    this._jobIsActiveted = true
+
+    this.clearRoomsJob()
   }
 
   public findById(room_id: string): Room | null {
@@ -21,6 +25,11 @@ export default class Rooms {
 
   public addRoom(room: Room): Room | boolean {
     if (this.findById(room.id)) return false
+
+    if (!this._jobIsActiveted) {
+      console.log("Clearing empty rooms restart")
+      this.clearRoomsJob()
+    }
 
     this._rooms.push(room)
     return room
@@ -41,5 +50,30 @@ export default class Rooms {
         partcipants: r.participants
       }
     })
+  }
+
+  private async clearEmptyRooms(): Promise<void> {
+    new Promise<Room[]>((resolve, reject) => {
+      try {
+        this._rooms = this._rooms.filter(r => r.participants.length > 0)
+        return resolve(this._rooms)
+      } catch (err) {
+        reject(this._rooms)
+      }
+    })
+  }
+
+  private clearRoomsJob(): void {
+    const interval = setInterval(() => {
+      console.log("Clearing empty rooms")
+      const room_length = this._rooms.length
+      this.clearEmptyRooms()
+
+      if (room_length === this._rooms.length) {
+        console.log("No empty rooms found")
+        this._jobIsActiveted = false
+        clearInterval(interval)
+      }
+    }, 60 * 100)
   }
 }
