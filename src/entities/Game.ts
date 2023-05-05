@@ -1,3 +1,4 @@
+import { InMemoryDatabase } from "../database"
 import { Character } from "./Character"
 import { v4 as uuid } from "uuid"
 
@@ -8,11 +9,17 @@ export class Game {
   private _gameRounds: number
   private _fisrtPlayerIdWasKiller: string
   private _currentPlayerKillerId: string
-  private _players: Character[]
+  private _players: Character[] = []
 
   constructor(room_id: string) {
     this._id = uuid()
     this._room_id = room_id
+
+    const database = InMemoryDatabase.getIstance()
+
+    database.Characters.characters.forEach(c => {
+      this._players.push(new Character(c.name, c.favoritePlaceId))
+    })
   }
 
   get id(): string {
@@ -86,5 +93,26 @@ export class Game {
     if (!player.choosePlace(place_id)) {
       return "You already choose this place"
     }
+  }
+
+  get players(): Character[] {
+    return this._players
+  }
+
+  public updatePlayer(participant_id: string, playe_name: string): void {
+    const player = this._players.find(p => p.name === playe_name)
+    if (!player) return
+
+    player.participant_id = participant_id
+  }
+
+  public availableCharacters(): { name: string, favoritePlaceId: string, inUse: boolean }[] {
+    return this._players.map(p => {
+      return {
+        name: p.name,
+        favoritePlaceId: p.favoritePlaceId,
+        inUse: p.participant_id !== null
+      }
+    })
   }
 }

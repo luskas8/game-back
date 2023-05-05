@@ -1,3 +1,5 @@
+
+
 class BaseError extends Error {
   public readonly name: string
   public readonly httpCode: Http.StatusCode

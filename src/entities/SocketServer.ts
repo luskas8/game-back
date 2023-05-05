@@ -2,6 +2,7 @@ import { Server } from "socket.io"
 import { APIError } from "./Error"
 import ExpressServer from "./ExpressServer"
 
+
 export default class SocketServer {
   private static _instance: Server
 

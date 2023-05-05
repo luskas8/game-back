@@ -1,3 +1,4 @@
+import { Socket } from "socket.io"
 import { Participant } from "../../entities/Participant"
 
 export default class Participants {
@@ -14,6 +15,20 @@ export default class Participants {
   public add(participant: Participant): Participant | boolean {
     if (this.find(participant.id)) return false
 
+    this._participants.push(participant)
+    return participant
+  }
+
+  public upsert(participant_id: string, socket: Socket = null): Participant {
+    if (participant_id) {
+      const foundParticipant = this.find(participant_id)
+      if (foundParticipant) {
+        foundParticipant.socket = socket
+        return foundParticipant
+      }
+    }
+
+    const participant = new Participant(participant_id, socket)
     this._participants.push(participant)
     return participant
   }

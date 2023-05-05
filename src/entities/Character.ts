@@ -13,8 +13,8 @@ export class Character {
   public currentPlaceId: string | null
   private selectedPlaces: Place[] | null
 
-  constructor(participant_id: string,name: string, favoritePlaceId: string) {
-    this._participant_id = participant_id
+  constructor(name: string, favoritePlaceId: string) {
+    this._participant_id = null
     this.name = name
     this.favoritePlaceId = favoritePlaceId
     this.selectedPlaces = []
@@ -27,6 +27,10 @@ export class Character {
 
   public get participant_id(): string {
     return this._participant_id
+  }
+
+  public set participant_id(participant_id: string) {
+    this._participant_id = participant_id
   }
 
   public choosePlace(placeId: string): boolean {
@@ -51,4 +55,5 @@ export class Character {
       }
     })
   }
+
 }

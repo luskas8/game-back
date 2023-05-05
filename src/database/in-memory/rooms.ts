@@ -15,6 +15,15 @@ export default class Rooms {
     return this._rooms.find(r => r.id === room_id) || null
   }
 
+  public findByIdOrAdd(room_id: string, participant_id: string): Room {
+    const foundRoom = this.findById(room_id)
+    if (foundRoom) return foundRoom
+
+    const room = new Room(participant_id, room_id, room_id)
+    this._rooms.push(room)
+    return room
+  }
+
   public findByName(room_name: string): Room | null {
     return this._rooms.find(r => r.name === room_name) || null
   }

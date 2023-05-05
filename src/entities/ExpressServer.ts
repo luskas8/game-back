@@ -1,6 +1,7 @@
 import express, { Express } from 'express'
 import { createServer, Server } from 'http'
 import { APIError } from './Error'
+ '../@types/http-custom'
 
 export default class ExpressServer {
 

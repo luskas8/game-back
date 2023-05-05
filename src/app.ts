@@ -6,6 +6,7 @@ import router from "./app/routes"
 import SocketServer from "./entities/SocketServer"
 import { connection } from "./app/socket/connection"
 import { InMemoryDatabase } from "./database"
+ "./@types/http-custom"
 
 export function main(app: Express): boolean {
   try {

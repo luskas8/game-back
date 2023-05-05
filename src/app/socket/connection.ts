@@ -1,7 +1,5 @@
 import { Socket } from "socket.io"
 import { InMemoryDatabase } from "../../database"
-import { Participant } from "../../entities/Participant"
-import { Room } from "../../entities/Room"
 import SocketServer from "../../entities/SocketServer"
 import { APIError } from "../../entities/Error"
 import { Message } from "../../@types/socket"
@@ -9,6 +7,10 @@ import { Message } from "../../@types/socket"
 interface JoinData {
   room_id: string
   participant_id: string
+}
+
+export interface ChooseCharacterData extends JoinData {
+  character: string
 }
 
 export function connection(socket: Socket): void {
@@ -26,7 +28,7 @@ export function connection(socket: Socket): void {
       return
     }
     socket.leave(room.name)
-    room?.removeParticipantBySocket(socket.id)
+    room.removeParticipantBySocket(socket.id)
     database.Participants.removeBySocket(socket.id)
   })
 
@@ -38,51 +40,36 @@ export function connection(socket: Socket): void {
       return
     }
 
-    socket.rooms.delete(data.room_id)
+    socket.leave(data.room_id)
     room.removeParticipant(participant)
     database.Participants.remove(participant)
   }))
 
   socket.on("join", ((data: JoinData) => {
-    const participant = database.Participants.find(data.participant_id)
-    const room = database.Rooms.findById(data.room_id)
+    try {
+      const participant = database.Participants.upsert(data.participant_id, socket)
+      const room = database.Rooms.findByIdOrAdd(data.room_id, participant.id)
+      const roomsParticpant = room.participants.find(p => p.id === participant.id)
 
-    if (!participant) {
-      const created = database.Participants.add(new Participant(data.participant_id || null, socket))
-
-      if (!created || typeof created === "boolean") {
-        console.log("Error creating participant")
+      if (data.participant_id !== participant.id) {
+        io.to(socket.id).emit("participant_id", { participant_id: participant.id })
+      }
+      if (roomsParticpant && roomsParticpant.id === participant.id) {
+        console.log(`Particpant[${participant.id}] \x1b[31malready in\x1b[37m Room[${room.id}]`)
         return
       }
 
-      data.participant_id = created.id
-      socket.emit("participant_id", { participant_id: created.id })
+      socket.join(room.id)
+      room.addParticipant(participant)
 
-    } else {
-      participant.socket = socket
-      database.Participants.update(participant)
+      console.log(`Participant[${participant.id}] \x1b[32mjoined\x1b[37m Room[${room.id}]`)
+      socket.send({ message: "\x1b[32mYou joined the room.\x1b[37m" })
+    } catch (error) {
+      new APIError("SOCKET_ERROR", 500, "Error creating participant or room", true)
     }
-    if (!room) {
-      database.Rooms.addRoom(new Room(data.room_id, data.participant_id, data.room_id))
-    }
-
-
-    if (socket.rooms.has(data.room_id)) {
-      console.log(`${data.participant_id} already in room ${data.room_id}`)
-      return
-    }
-
-    socket.join(data.room_id)
-    if (room) {
-      room.addParticipant(participant || database.Participants.find(data.participant_id))
-    } else {
-      database.Rooms.findById(data.room_id)?.addParticipant(participant || database.Participants.find(data.participant_id))
-    }
-    console.log(`${data.participant_id} joined room ${data.room_id}`)
-    socket.send({ message: "You joined the room." })
   }))
 
-  socket.on("message", (data:Message) => {
+  socket.on("message", (data: Message) => {
     console.log(data)
     const room = database.Rooms.findById(data.room_id)
 
@@ -95,4 +82,57 @@ export function connection(socket: Socket): void {
       io.to(room.name).emit("start")
     }
   });
+
+  socket.on("character", (data: JoinData) => {
+    const { participant_id, room_id } = data
+
+    const game = database.Games.findByRoomIdOrAdd(room_id)
+
+    const players = game.players
+    const player = players.find(p => p.participant_id === participant_id)
+
+    if (!player) {
+      const startPlayer = players.find(p => p.participant_id === null)
+      if (!startPlayer) {
+        socket.emit("message", { message: "Game full" })
+        return
+      }
+
+      startPlayer.participant_id = participant_id
+      io.to(socket.id).emit("your_character", { player: startPlayer })
+      return startPlayer
+    }
+
+    io.to(socket.id).emit("your_character", { player })
+    return player
+  })
+
+  socket.on("available_characters", (data: JoinData) => {
+    const { room_id } = data
+
+    const game = database.Games.findByRoomIdOrAdd(room_id)
+
+    const availableCharacters = game.availableCharacters()
+
+    io.to(socket.id).emit("available_characters", { availableCharacters })
+  })
+
+  socket.on("choose_character", (data: ChooseCharacterData) => {
+    const { participant_id, room_id, character } = data
+
+    const game = database.Games.findByRoomIdOrAdd(room_id)
+
+    const player = game.players.find(p => p.participant_id === participant_id)
+    const characterPlayer = game.players.find(p => p.name === character)
+
+    if (!player) {
+      return
+    }
+
+    player.participant_id = null
+    characterPlayer.participant_id = participant_id
+
+    const availableCharacters = game.availableCharacters()
+    io.to(room_id).emit("available_characters", { characters: availableCharacters, sender: participant_id })
+  })
 }

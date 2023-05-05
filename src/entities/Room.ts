@@ -7,9 +7,9 @@ export class Room {
   private owner: string
   private _participants: Participant[]
 
-  constructor(room_name: string, owner: string, id?: string) {
+  constructor(owner: string, name?: string, id?: string) {
     this._id = id || uuid()
-    this._name = room_name
+    this._name = name || id || this._id
     this.owner = owner
     this._participants = []
   }

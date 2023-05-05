@@ -1,6 +1,7 @@
 import Games from "./in-memory/games"
 import Participants from "./in-memory/participants"
 import Rooms from "./in-memory/rooms"
+import Characters from "./static-memory/characters"
 import Places from "./static-memory/places"
 
 interface Database {
@@ -8,6 +9,7 @@ interface Database {
   Rooms: Rooms
   Places: Places
   Games: Games
+  Characters: Characters
 }
 
 export class InMemoryDatabase {
@@ -24,6 +26,7 @@ export class InMemoryDatabase {
         Rooms: new Rooms(),
         Places: new Places(),
         Games: new Games(),
+        Characters: new Characters(),
       }
     }
 

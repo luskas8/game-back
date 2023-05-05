@@ -27,14 +27,16 @@ router.post('/room', (req, res) => {
   const participant = new Participant()
   database.Participants.add(participant)
 
-  const room = new Room(room_name, participant.id)
-  if (!database.Rooms.addRoom(room)) {
+  const room = database.Rooms.addRoom(new Room(participant.id, room_name))
+  if (typeof room === "boolean") {
     database.Participants.remove(participant)
 
     return res.status(400).json({
       message: "Room already exists."
     })
   }
+
+  room.addParticipant(participant)
 
   return res.status(201).json({
     message: "Room created.",
@@ -62,6 +64,22 @@ router.get('/places', (req, res) => {
   const database = InMemoryDatabase.getIstance()
   res.status(200).send({
     places: database.Places.places
+  })
+})
+
+router.get('/characters', (req, res) => {
+  const database = InMemoryDatabase.getIstance()
+  res.status(200).send({
+    characters: database.Characters.characters
+  })
+})
+
+router.get('/characters/:room_id', (req, res) => {
+  const { room_id } = req.params
+
+  const database = InMemoryDatabase.getIstance()
+  res.status(200).send({
+    characters: database.Games.findByRoomId(room_id)?.availableCharacters() || []
   })
 })
 
